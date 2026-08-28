@@ -1,150 +1,67 @@
-
 const enc = new TextEncoder();
+const SEED_PRODUCTS = [{"id":"aurora","name":"Buquê Aurora","category":"Buquês","description":"Mix floral delicado e colorido para celebrar com leveza.","price":129.9,"image":"https://images.unsplash.com/photo-1521463405500-2bbe81bb2645?auto=format&fit=crop&q=82&w=1200","occasions":["Aniversário","Para surpreender","Amor e Romance"],"recipients":["Namorada(o) / Amor","Mãe","Amiga(o)","Família"],"featured":true,"new":true,"active":true,"gallery":["https://images.unsplash.com/photo-1521463405500-2bbe81bb2645?auto=format&fit=crop&q=86&w=1400","https://images.unsplash.com/photo-1567696153798-9111f9cd3d0d?auto=format&fit=crop&q=86&w=1400"],"availability":"Disponível hoje","addons":[{"name":"Cartão com mensagem","price":null},{"name":"Pelúcia","price":null},{"name":"Chocolate","price":null},{"name":"Balão","price":null}]},{"id":"rosas","name":"Buquê de Rosas Vermelhas","category":"Buquês","description":"Rosas vermelhas em uma composição clássica para momentos românticos.","price":159.9,"image":"https://images.unsplash.com/photo-1570118281125-84ec73b8008a?auto=format&fit=crop&q=82&w=1200","occasions":["Amor e Romance","Aniversário","Para surpreender"],"recipients":["Namorada(o) / Amor"],"featured":true,"new":false,"active":true,"gallery":["https://images.unsplash.com/photo-1570118281125-84ec73b8008a?auto=format&fit=crop&q=86&w=1400","https://images.unsplash.com/photo-1521463405500-2bbe81bb2645?auto=format&fit=crop&q=86&w=1400"],"availability":"Disponível hoje","addons":[{"name":"Cartão com mensagem","price":null},{"name":"Pelúcia","price":null},{"name":"Chocolate","price":null},{"name":"Balão","price":null}]},{"id":"girassois","name":"Girassóis de Luz","category":"Flores","description":"Um buquê alegre e vibrante para iluminar o dia de alguém especial.","price":99.9,"image":"https://images.unsplash.com/photo-1543409777-30250849aa3e?auto=format&fit=crop&q=82&w=1200","occasions":["Amizade","Parabéns","Para surpreender"],"recipients":["Amiga(o)","Mãe","Família","Outra pessoa"],"featured":false,"new":true,"active":true,"gallery":["https://images.unsplash.com/photo-1543409777-30250849aa3e?auto=format&fit=crop&q=86&w=1400","https://images.unsplash.com/photo-1567696153798-9111f9cd3d0d?auto=format&fit=crop&q=86&w=1400"],"availability":"Disponível hoje","addons":[{"name":"Cartão com mensagem","price":null},{"name":"Pelúcia","price":null},{"name":"Chocolate","price":null},{"name":"Balão","price":null}]},{"id":"carinho","name":"Flores + Carinho","category":"Pelúcias","description":"Rosas delicadas combinadas com pelúcias para um presente cheio de afeto.","price":189.9,"image":"https://images.unsplash.com/photo-1772688167986-2653c82cbee8?auto=format&fit=crop&q=82&w=1200","occasions":["Amor e Romance","Aniversário","Para surpreender"],"recipients":["Namorada(o) / Amor","Amiga(o)","Outra pessoa"],"featured":true,"new":true,"active":true,"gallery":["https://images.unsplash.com/photo-1772688167986-2653c82cbee8?auto=format&fit=crop&q=86&w=1400","https://images.unsplash.com/photo-1521463405500-2bbe81bb2645?auto=format&fit=crop&q=86&w=1400"],"availability":"Disponível hoje","addons":[{"name":"Cartão com mensagem","price":null},{"name":"Pelúcia","price":null},{"name":"Chocolate","price":null},{"name":"Balão","price":null}]},{"id":"arranjo","name":"Arranjo Jardim Yaya","category":"Arranjos","description":"Composição elegante para presentear, decorar e celebrar com delicadeza.","price":139.9,"image":"https://images.unsplash.com/photo-1567696153798-9111f9cd3d0d?auto=format&fit=crop&q=82&w=1200","occasions":["Parabéns","Agradecimento","Maternidade"],"recipients":["Mãe","Família","Cliente","Outra pessoa"],"featured":false,"new":false,"active":true,"gallery":["https://images.unsplash.com/photo-1567696153798-9111f9cd3d0d?auto=format&fit=crop&q=86&w=1400","https://images.unsplash.com/photo-1543409777-30250849aa3e?auto=format&fit=crop&q=86&w=1400"],"availability":"Sob encomenda","addons":[{"name":"Cartão com mensagem","price":null},{"name":"Pelúcia","price":null},{"name":"Chocolate","price":null},{"name":"Balão","price":null}]},{"id":"presente","name":"Presente Celebração","category":"Presentes","description":"Flores em uma apresentação especial para datas e conquistas inesquecíveis.","price":219.9,"image":"https://images.unsplash.com/photo-1521463405500-2bbe81bb2645?auto=format&fit=crop&q=82&w=1200","occasions":["Datas especiais","Parabéns","Aniversário"],"recipients":["Namorada(o) / Amor","Mãe","Família","Cliente","Outra pessoa"],"featured":false,"new":false,"active":true,"gallery":["https://images.unsplash.com/photo-1521463405500-2bbe81bb2645?auto=format&fit=crop&q=86&w=1400","https://images.unsplash.com/photo-1567696153798-9111f9cd3d0d?auto=format&fit=crop&q=86&w=1400"],"availability":"Disponível hoje","addons":[{"name":"Cartão com mensagem","price":null},{"name":"Pelúcia","price":null},{"name":"Chocolate","price":null},{"name":"Balão","price":null}]}];
+let schemaReady = false;
 
-function json(data,status=200,headers={}) {
-  return new Response(JSON.stringify(data),{status,headers:{"content-type":"application/json; charset=utf-8",...headers}});
+function json(data,status=200,headers={}) { return new Response(JSON.stringify(data),{status,headers:{"content-type":"application/json; charset=utf-8",...headers}}); }
+function b64url(bytes){return btoa(String.fromCharCode(...bytes)).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/g,"")}
+async function hmac(secret,msg){const key=await crypto.subtle.importKey("raw",enc.encode(secret),{name:"HMAC",hash:"SHA-256"},false,["sign"]);return b64url(new Uint8Array(await crypto.subtle.sign("HMAC",key,enc.encode(msg))))}
+async function pbkdf2(password,salt){const key=await crypto.subtle.importKey("raw",enc.encode(password),"PBKDF2",false,["deriveBits"]);const bits=await crypto.subtle.deriveBits({name:"PBKDF2",hash:"SHA-256",salt:enc.encode(salt),iterations:180000},key,256);return b64url(new Uint8Array(bits))}
+function cookies(req){const out={};for(const part of (req.headers.get("cookie")||"").split(";")){const i=part.indexOf("=");if(i>0)out[part.slice(0,i).trim()]=decodeURIComponent(part.slice(i+1).trim())}return out}
+async function ensureDb(env){
+  if(schemaReady)return;
+  await env.DB.prepare("CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL DEFAULT '')").run();
+  await env.DB.prepare("CREATE TABLE IF NOT EXISTS products (id TEXT PRIMARY KEY, data TEXT NOT NULL, active INTEGER NOT NULL DEFAULT 1, sort_order INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL, updated_at TEXT NOT NULL)").run();
+  const c=await env.DB.prepare("SELECT COUNT(*) AS n FROM products").first();
+  if(Number(c?.n||0)===0){
+    const now=new Date().toISOString();
+    for(let i=0;i<SEED_PRODUCTS.length;i++){
+      const p=SEED_PRODUCTS[i];
+      await env.DB.prepare("INSERT OR IGNORE INTO products(id,data,active,sort_order,created_at,updated_at) VALUES(?,?,?,?,?,?)").bind(p.id,JSON.stringify(p),p.active===false?0:1,i,now,now).run();
+    }
+  }
+  schemaReady=true;
 }
-function b64url(bytes){return btoa(String.fromCharCode(...bytes)).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"")}
-function fromHex(hex){return new Uint8Array(hex.match(/.{1,2}/g).map(x=>parseInt(x,16)))}
-async function sha256(s){return new Uint8Array(await crypto.subtle.digest("SHA-256",enc.encode(s)))}
-async function hmac(secret,msg){
-  const key=await crypto.subtle.importKey("raw",enc.encode(secret),{name:"HMAC",hash:"SHA-256"},false,["sign"]);
-  return b64url(new Uint8Array(await crypto.subtle.sign("HMAC",key,enc.encode(msg))));
-}
-async function pbkdf2(password,salt){
-  const key=await crypto.subtle.importKey("raw",enc.encode(password),"PBKDF2",false,["deriveBits"]);
-  const bits=await crypto.subtle.deriveBits({name:"PBKDF2",hash:"SHA-256",salt:enc.encode(salt),iterations:180000},key,256);
-  return b64url(new Uint8Array(bits));
-}
-function cookies(req){
-  const out={}; for(const part of (req.headers.get("cookie")||"").split(";")){
-    const i=part.indexOf("="); if(i>0) out[part.slice(0,i).trim()]=decodeURIComponent(part.slice(i+1).trim());
-  } return out;
-}
-async function sessionSecret(env){
-  let row=await env.DB.prepare("SELECT value FROM settings WHERE key='adminSessionSecret'").first();
-  if(row?.value)return row.value;
-  const secret=crypto.randomUUID()+crypto.randomUUID();
-  await env.DB.prepare("INSERT OR REPLACE INTO settings(key,value) VALUES('adminSessionSecret',?)").bind(secret).run();
-  return secret;
-}
-async function createSession(env){
-  const ts=Date.now().toString(), secret=await sessionSecret(env), sig=await hmac(secret,ts);
-  return `${ts}.${sig}`;
-}
-async function authenticated(req,env){
-  const token=cookies(req).yaya_admin; if(!token)return false;
-  const [ts,sig]=token.split("."); if(!ts||!sig)return false;
-  if(Date.now()-Number(ts)>8*60*60*1000)return false;
-  const expected=await hmac(await sessionSecret(env),ts);
-  return sig===expected;
-}
-async function setting(env,key){
-  const r=await env.DB.prepare("SELECT value FROM settings WHERE key=?").bind(key).first(); return r?.value??"";
-}
-async function setSetting(env,key,value){
-  await env.DB.prepare("INSERT OR REPLACE INTO settings(key,value) VALUES(?,?)").bind(key,String(value??"")).run();
-}
+async function setting(env,key){const r=await env.DB.prepare("SELECT value FROM settings WHERE key=?").bind(key).first();return r?.value??""}
+async function setSetting(env,key,value){await env.DB.prepare("INSERT OR REPLACE INTO settings(key,value) VALUES(?,?)").bind(key,String(value??"")).run()}
+async function sessionSecret(env){let v=await setting(env,"adminSessionSecret");if(v)return v;v=crypto.randomUUID()+crypto.randomUUID();await setSetting(env,"adminSessionSecret",v);return v}
+async function createSession(env){const ts=Date.now().toString(),sig=await hmac(await sessionSecret(env),ts);return `${ts}.${sig}`}
+async function authenticated(req,env){const token=cookies(req).yaya_admin;if(!token)return false;const [ts,sig]=token.split(".");if(!ts||!sig||Date.now()-Number(ts)>8*60*60*1000)return false;return sig===await hmac(await sessionSecret(env),ts)}
 async function readBody(req){try{return await req.json()}catch{return {}}}
-function productFromRow(r){
-  return {...r,active:!!r.active,novelty:!!r.novelty,images:JSON.parse(r.images||"[]"),addons:JSON.parse(r.addons||"[]")};
+function parseProduct(row){try{return JSON.parse(row.data)}catch{return {id:row.id,active:!!row.active}}}
+async function listProducts(env,admin=false){const q=admin?"SELECT * FROM products ORDER BY sort_order ASC, created_at DESC":"SELECT * FROM products WHERE active=1 ORDER BY sort_order ASC, created_at DESC";const {results}=await env.DB.prepare(q).all();return results.map(parseProduct)}
+async function getProduct(env,id){const r=await env.DB.prepare("SELECT * FROM products WHERE id=?").bind(id).first();return r?parseProduct(r):null}
+function dataUrlBytes(dataUrl){const m=String(dataUrl||"").match(/^data:([^;,]+);base64,(.+)$/);if(!m)throw new Error("Imagem inválida.");const raw=atob(m[2]),bytes=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);return {type:m[1],bytes}}
+function extFor(type){return ({"image/jpeg":"jpg","image/png":"png","image/webp":"webp","image/gif":"gif"})[type]||"jpg"}
+async function storeDataUrl(env,dataUrl){const {type,bytes}=dataUrlBytes(dataUrl);const key=`products/${Date.now()}-${crypto.randomUUID()}.${extFor(type)}`;await env.IMAGES.put(key,bytes,{httpMetadata:{contentType:type}});return `/media/${key}`}
+async function normalizeProduct(env,input,existing=null,id=null){
+  const p={...(existing||{}),...input};p.id=id||existing?.id||crypto.randomUUID();
+  if(input.imageData)p.image=await storeDataUrl(env,input.imageData);
+  if(Array.isArray(input.galleryData)&&input.galleryData.length){p.gallery=[];for(const x of input.galleryData)p.gallery.push(await storeDataUrl(env,x));if(!input.imageData&&p.gallery[0])p.image=p.gallery[0]}
+  delete p.imageData;delete p.galleryData;
+  p.addons=Array.isArray(p.addons)?p.addons:[];p.occasions=Array.isArray(p.occasions)?p.occasions:[];p.recipients=Array.isArray(p.recipients)?p.recipients:[];p.gallery=Array.isArray(p.gallery)?p.gallery:[];
+  p.featured=!!p.featured;p.new=!!p.new;p.active=p.active!==false;p.availability=p.availability||"Disponível hoje";
+  if(p.price!==null&&p.price!==""&&p.price!==undefined)p.price=Number(p.price);else p.price=null;
+  if(!p.image)p.image="/assets/bouquet.svg";
+  return p;
 }
-async function listProducts(env,admin=false){
-  const q=admin?"SELECT * FROM products ORDER BY sort_order ASC, created_at DESC":"SELECT * FROM products WHERE active=1 ORDER BY sort_order ASC, created_at DESC";
-  const {results}=await env.DB.prepare(q).all(); return results.map(productFromRow);
-}
-async function saveProduct(env,p,id){
-  const now=new Date().toISOString(); const pid=id||crypto.randomUUID();
-  const exists=id?await env.DB.prepare("SELECT id FROM products WHERE id=?").bind(id).first():null;
-  const vals=[
-    p.name||"",p.category||"",p.description||"",p.price||"",p.availability||"Disponível hoje",
-    JSON.stringify(p.images||[]),JSON.stringify(p.addons||[]),p.active===false?0:1,p.novelty?1:0,
-    Number(p.sort_order||0),now,pid
-  ];
-  if(exists){
-    await env.DB.prepare(`UPDATE products SET name=?,category=?,description=?,price=?,availability=?,images=?,addons=?,active=?,novelty=?,sort_order=?,updated_at=? WHERE id=?`).bind(...vals).run();
-  }else{
-    await env.DB.prepare(`INSERT INTO products(name,category,description,price,availability,images,addons,active,novelty,sort_order,created_at,updated_at,id) VALUES(?,?,?,?,?,?,?,?,?,?,?, ?,?)`)
-      .bind(p.name||"",p.category||"",p.description||"",p.price||"",p.availability||"Disponível hoje",JSON.stringify(p.images||[]),JSON.stringify(p.addons||[]),p.active===false?0:1,p.novelty?1:0,Number(p.sort_order||0),now,now,pid).run();
-  }
-  return pid;
-}
+async function saveProduct(env,input,id=null){const old=id?await getProduct(env,id):null;const p=await normalizeProduct(env,input,old,id);const now=new Date().toISOString();const row=id?await env.DB.prepare("SELECT sort_order,created_at FROM products WHERE id=?").bind(id).first():null;const sort=row?.sort_order??Date.now();const created=row?.created_at||now;await env.DB.prepare("INSERT OR REPLACE INTO products(id,data,active,sort_order,created_at,updated_at) VALUES(?,?,?,?,?,?)").bind(p.id,JSON.stringify(p),p.active?1:0,sort,created,now).run();return p}
+function maskKey(k){if(!k)return "";return k.length<9?"••••••••":`${k.slice(0,4)}••••${k.slice(-4)}`}
+
 async function api(req,env,url){
-  const path=url.pathname;
-  if(path==="/api/products"&&req.method==="GET") return json(await listProducts(env,false));
-  if(path==="/api/admin/status"&&req.method==="GET"){
-    const configured=!!(await setting(env,"adminPasswordHash"));
-    return json({serverVersion:9,authenticated:await authenticated(req,env),configured});
-  }
-  if(path==="/api/admin/setup"&&req.method==="POST"){
-    if(await setting(env,"adminPasswordHash"))return json({error:"A senha já foi criada."},409);
-    const {password}=await readBody(req); if(!password||password.length<6)return json({error:"Use uma senha com pelo menos 6 caracteres."},400);
-    const salt=crypto.randomUUID(),hash=await pbkdf2(password,salt);
-    await setSetting(env,"adminPasswordSalt",salt); await setSetting(env,"adminPasswordHash",hash);
-    const token=await createSession(env);
-    return json({ok:true,authenticated:true,serverVersion:9},200,{"set-cookie":`yaya_admin=${encodeURIComponent(token)}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=28800`});
-  }
-  if(path==="/api/admin/login"&&req.method==="POST"){
-    const {password}=await readBody(req), salt=await setting(env,"adminPasswordSalt"), hash=await setting(env,"adminPasswordHash");
-    if(!salt||!hash||await pbkdf2(password||"",salt)!==hash)return json({error:"Senha incorreta."},401);
-    const token=await createSession(env);
-    return json({ok:true,authenticated:true,serverVersion:9},200,{"set-cookie":`yaya_admin=${encodeURIComponent(token)}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=28800`});
-  }
-  if(path==="/api/admin/logout"&&req.method==="POST")
-    return json({ok:true},200,{"set-cookie":"yaya_admin=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0"});
-  if(path.startsWith("/api/admin/") && !(await authenticated(req,env)))return json({error:"Não autorizado."},401);
-
+  await ensureDb(env);const path=url.pathname;
+  if(path==="/api/products"&&req.method==="GET")return json(await listProducts(env,false));
+  if(path==="/api/admin/status"&&req.method==="GET")return json({serverVersion:10,authenticated:await authenticated(req,env),configured:!!(await setting(env,"adminPasswordHash"))});
+  if(path==="/api/admin/setup"&&req.method==="POST"){if(await setting(env,"adminPasswordHash"))return json({error:"A senha já foi criada."},409);const {password}=await readBody(req);if(!password||password.length<6)return json({error:"Use uma senha com pelo menos 6 caracteres."},400);const salt=crypto.randomUUID(),hash=await pbkdf2(password,salt);await setSetting(env,"adminPasswordSalt",salt);await setSetting(env,"adminPasswordHash",hash);const token=await createSession(env);return json({ok:true,authenticated:true,serverVersion:10},200,{"set-cookie":`yaya_admin=${encodeURIComponent(token)}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=28800`})}
+  if(path==="/api/admin/login"&&req.method==="POST"){const {password}=await readBody(req),salt=await setting(env,"adminPasswordSalt"),hash=await setting(env,"adminPasswordHash");if(!salt||!hash||await pbkdf2(password||"",salt)!==hash)return json({error:"Senha incorreta."},401);const token=await createSession(env);return json({ok:true,authenticated:true,serverVersion:10},200,{"set-cookie":`yaya_admin=${encodeURIComponent(token)}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=28800`})}
+  if(path==="/api/admin/logout"&&req.method==="POST")return json({ok:true},200,{"set-cookie":"yaya_admin=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0"});
+  if(path.startsWith("/api/admin/")&&!(await authenticated(req,env)))return json({error:"Não autorizado."},401);
   if(path==="/api/admin/products"&&req.method==="GET")return json(await listProducts(env,true));
-  if(path==="/api/admin/products"&&req.method==="POST"){
-    const p=await readBody(req); const id=await saveProduct(env,p); return json({ok:true,id},201);
-  }
-  const pm=path.match(/^\/api\/admin\/products\/([^/]+)$/);
-  if(pm&&req.method==="PUT"){const p=await readBody(req);await saveProduct(env,p,pm[1]);return json({ok:true})}
-  if(pm&&req.method==="DELETE"){await env.DB.prepare("DELETE FROM products WHERE id=?").bind(pm[1]).run();return json({ok:true})}
-
-  if(path==="/api/admin/settings"&&req.method==="GET"){
-    const {results}=await env.DB.prepare("SELECT key,value FROM settings WHERE key NOT LIKE 'adminPassword%' AND key!='adminSessionSecret'").all();
-    const o=Object.fromEntries(results.map(x=>[x.key,x.value])); if(o.geminiApiKey)o.geminiApiKey="••••••••";
-    return json(o);
-  }
-  if(path==="/api/admin/settings"&&req.method==="PUT"){
-    const body=await readBody(req);
-    for(const [k,v] of Object.entries(body)){
-      if(k.startsWith("adminPassword")||k==="adminSessionSecret")continue;
-      if(k==="geminiApiKey"&&String(v).includes("•"))continue;
-      await setSetting(env,k,v);
-    } return json({ok:true});
-  }
-  if(path==="/api/admin/upload"&&req.method==="POST"){
-    const form=await req.formData(); const file=form.get("file");
-    if(!(file instanceof File))return json({error:"Arquivo não enviado."},400);
-    if(!file.type.startsWith("image/"))return json({error:"Envie uma imagem."},400);
-    const ext=(file.name.split(".").pop()||"jpg").replace(/[^a-z0-9]/gi,"").toLowerCase();
-    const key=`products/${Date.now()}-${crypto.randomUUID()}.${ext}`;
-    await env.IMAGES.put(key,file.stream(),{httpMetadata:{contentType:file.type}});
-    return json({ok:true,url:`/media/${key}`});
-  }
-  if(path==="/api/admin/improve-image"&&req.method==="POST"){
-    const key=await setting(env,"geminiApiKey");
-    if(!key)return json({error:"Configure a chave Gemini no painel."},400);
-    return json({error:"A melhoria Gemini está preparada para a Cloudflare, mas requer a chave/modelo configurados antes do teste final."},501);
-  }
+  if(path==="/api/admin/products"&&req.method==="POST"){const p=await saveProduct(env,await readBody(req));return json({ok:true,id:p.id,product:p},201)}
+  const pm=path.match(/^\/api\/admin\/products\/([^/]+)$/);if(pm&&req.method==="PUT"){const p=await saveProduct(env,await readBody(req),pm[1]);return json({ok:true,product:p})}if(pm&&req.method==="DELETE"){await env.DB.prepare("DELETE FROM products WHERE id=?").bind(pm[1]).run();return json({ok:true})}
+  if(path==="/api/admin/settings"&&req.method==="GET"){const key=await setting(env,"geminiApiKey"),model=await setting(env,"geminiModel");return json({hasKey:!!key,maskedKey:maskKey(key),geminiModel:model||"gemini-3.1-flash-image"})}
+  if(path==="/api/admin/settings"&&req.method==="PUT"){const body=await readBody(req);if(body.clearKey)await setSetting(env,"geminiApiKey","");if(body.geminiApiKey&&String(body.geminiApiKey).trim())await setSetting(env,"geminiApiKey",String(body.geminiApiKey).trim());if(body.geminiModel)await setSetting(env,"geminiModel",body.geminiModel);const key=await setting(env,"geminiApiKey");return json({ok:true,hasKey:!!key,maskedKey:maskKey(key),geminiModel:(await setting(env,"geminiModel"))||"gemini-3.1-flash-image"})}
+  if(path==="/api/admin/improve-image"&&req.method==="POST"){if(!(await setting(env,"geminiApiKey")))return json({error:"Configure a chave Gemini no painel."},400);return json({error:"A melhoria com Gemini será ativada após validarmos o modelo de imagem na publicação. O restante do painel está funcional."},501)}
   return json({error:"Rota não encontrada."},404);
 }
-async function media(env,key){
-  const obj=await env.IMAGES.get(key); if(!obj)return new Response("Not found",{status:404});
-  const h=new Headers(); obj.writeHttpMetadata(h); h.set("etag",obj.httpEtag); h.set("cache-control","public, max-age=31536000, immutable");
-  return new Response(obj.body,{headers:h});
-}
-export default {
-  async fetch(req,env){
-    const url=new URL(req.url);
-    try{
-      if(url.pathname.startsWith("/api/"))return await api(req,env,url);
-      if(url.pathname.startsWith("/media/"))return await media(env,url.pathname.slice(7));
-      if(url.pathname==="/admin")return env.ASSETS.fetch(new Request(new URL("/admin.html",url),req));
-      if(url.pathname==="/produto")return env.ASSETS.fetch(new Request(new URL("/produto.html",url),req));
-      return env.ASSETS.fetch(req);
-    }catch(e){console.error(e);return json({error:"Erro interno.",detail:String(e?.message||e)},500)}
-  }
-};
+async function media(env,key){const obj=await env.IMAGES.get(key);if(!obj)return new Response("Not found",{status:404});const h=new Headers();obj.writeHttpMetadata(h);h.set("etag",obj.httpEtag);h.set("cache-control","public, max-age=31536000, immutable");return new Response(obj.body,{headers:h})}
+export default {async fetch(req,env){const url=new URL(req.url);try{if(url.pathname.startsWith("/api/"))return await api(req,env,url);if(url.pathname.startsWith("/media/"))return await media(env,url.pathname.slice(7));if(url.pathname==="/admin")return env.ASSETS.fetch(new Request(new URL("/admin.html",url),req));if(url.pathname==="/produto")return env.ASSETS.fetch(new Request(new URL("/produto.html",url),req));return env.ASSETS.fetch(req)}catch(e){console.error(e);return json({error:"Erro interno.",detail:String(e?.message||e)},500)}}};

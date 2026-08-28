@@ -1,6 +1,6 @@
 const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];let originalData='',galleryData=[],aiData='',items=[],status={};
 async function api(url,opt={}){const r=await fetch(url,{credentials:'same-origin',headers:{'Content-Type':'application/json',...(opt.headers||{})},...opt});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Erro na operação');return d}
-const EXPECTED_SERVER_VERSION=9;
+const EXPECTED_SERVER_VERSION=10;
 function setAuthMode(setup){
   $('#authTitle').textContent=setup?'Criar acesso da proprietária':'Entrar no painel';
   $('#authText').textContent=setup?'Crie uma senha para proteger o painel. Ao concluir, você entrará automaticamente.':'Digite a senha que você criou para acessar o painel.';
@@ -16,14 +16,14 @@ function setAuthMode(setup){
 function backendMismatch(found){
   const btn=$('#authSubmit');
   btn.disabled=false;btn.textContent='Recarregar';
-  $('#authMsg').innerHTML=`<strong>Servidor antigo detectado.</strong><br>Esta página é da versão 8, mas o servidor aberto é ${found?`da versão ${found}`:'de uma versão anterior'}. Feche o terminal antigo e inicie pelo arquivo <strong>INICIAR-YAYA.bat</strong>.`;
+  $('#authMsg').innerHTML=`<strong>Servidor antigo detectado.</strong><br>Esta página é da versão 10, mas o servidor aberto é ${found?`da versão ${found}`:'de uma versão anterior'}. Feche o terminal antigo e inicie pelo arquivo <strong>INICIAR-YAYA.bat</strong>.`;
   btn.onclick=()=>location.reload(true);
 }
 async function boot(){
   $('#authMsg').textContent='Verificando acesso…';
   let st;
   try{st=await api('/api/admin/status?ts='+Date.now())}
-  catch(e){$('#authMsg').textContent='Não foi possível falar com o servidor. Reinicie pelo arquivo INICIAR-YAYA.bat.';return}
+  catch(e){$('#authMsg').textContent='Não foi possível falar com o servidor. Atualize a página após a nova publicação na Cloudflare.';return}
   if(st.serverVersion!==EXPECTED_SERVER_VERSION){backendMismatch(st.serverVersion);return}
   status=st;
   $('#authMsg').textContent='';
