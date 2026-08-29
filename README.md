@@ -1,4 +1,4 @@
-# Yaya Flores — Cloudflare v10
+# Yaya Flores — Cloudflare v11
 
 Versão de produção para Cloudflare Workers + D1 + R2.
 
