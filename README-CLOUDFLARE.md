@@ -21,4 +21,4 @@ Esta versão foi preparada para GitHub + Cloudflare Workers.
 9. Depois envie esta pasta para um repositório GitHub e conecte o repositório em Workers & Pages > Workers > Import a repository / Builds.
 
 ## Observação importante
-A integração Gemini foi preservada na interface/configuração, mas o endpoint de edição de imagem precisa ser validado com a chave/modelo reais no ambiente Cloudflare antes da entrega final. Não coloque a chave Gemini no GitHub.
+A integração Gemini está ativa no endpoint `/api/admin/improve-image` usando a Interactions API. A chave é configurada pelo painel e nunca deve ser colocada no GitHub.

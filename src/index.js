@@ -49,9 +49,9 @@ function maskKey(k){if(!k)return "";return k.length<9?"••••••••"
 async function api(req,env,url){
   await ensureDb(env);const path=url.pathname;
   if(path==="/api/products"&&req.method==="GET")return json(await listProducts(env,false));
-  if(path==="/api/admin/status"&&req.method==="GET")return json({serverVersion:11,authenticated:await authenticated(req,env),configured:!!(await setting(env,"adminPasswordHash"))});
-  if(path==="/api/admin/setup"&&req.method==="POST"){if(await setting(env,"adminPasswordHash"))return json({error:"A senha já foi criada."},409);const {password}=await readBody(req);if(!password||password.length<6)return json({error:"Use uma senha com pelo menos 6 caracteres."},400);const salt=crypto.randomUUID(),hash=await pbkdf2(password,salt);await setSetting(env,"adminPasswordSalt",salt);await setSetting(env,"adminPasswordHash",hash);const token=await createSession(env);return json({ok:true,authenticated:true,serverVersion:11},200,{"set-cookie":`yaya_admin=${encodeURIComponent(token)}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=28800`})}
-  if(path==="/api/admin/login"&&req.method==="POST"){const {password}=await readBody(req),salt=await setting(env,"adminPasswordSalt"),hash=await setting(env,"adminPasswordHash");if(!salt||!hash||await pbkdf2(password||"",salt)!==hash)return json({error:"Senha incorreta."},401);const token=await createSession(env);return json({ok:true,authenticated:true,serverVersion:11},200,{"set-cookie":`yaya_admin=${encodeURIComponent(token)}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=28800`})}
+  if(path==="/api/admin/status"&&req.method==="GET")return json({serverVersion:12,authenticated:await authenticated(req,env),configured:!!(await setting(env,"adminPasswordHash"))});
+  if(path==="/api/admin/setup"&&req.method==="POST"){if(await setting(env,"adminPasswordHash"))return json({error:"A senha já foi criada."},409);const {password}=await readBody(req);if(!password||password.length<6)return json({error:"Use uma senha com pelo menos 6 caracteres."},400);const salt=crypto.randomUUID(),hash=await pbkdf2(password,salt);await setSetting(env,"adminPasswordSalt",salt);await setSetting(env,"adminPasswordHash",hash);const token=await createSession(env);return json({ok:true,authenticated:true,serverVersion:12},200,{"set-cookie":`yaya_admin=${encodeURIComponent(token)}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=28800`})}
+  if(path==="/api/admin/login"&&req.method==="POST"){const {password}=await readBody(req),salt=await setting(env,"adminPasswordSalt"),hash=await setting(env,"adminPasswordHash");if(!salt||!hash||await pbkdf2(password||"",salt)!==hash)return json({error:"Senha incorreta."},401);const token=await createSession(env);return json({ok:true,authenticated:true,serverVersion:12},200,{"set-cookie":`yaya_admin=${encodeURIComponent(token)}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=28800`})}
   if(path==="/api/admin/logout"&&req.method==="POST"){await setSetting(env,"adminSessionToken","");await setSetting(env,"adminSessionExpires","0");return json({ok:true},200,{"set-cookie":"yaya_admin=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0"})}
   if(path.startsWith("/api/admin/")&&!(await authenticated(req,env)))return json({error:"Não autorizado."},401);
   if(path==="/api/admin/products"&&req.method==="GET")return json(await listProducts(env,true));
@@ -59,7 +59,36 @@ async function api(req,env,url){
   const pm=path.match(/^\/api\/admin\/products\/([^/]+)$/);if(pm&&req.method==="PUT"){const p=await saveProduct(env,await readBody(req),pm[1]);return json({ok:true,product:p})}if(pm&&req.method==="DELETE"){await env.DB.prepare("DELETE FROM products WHERE id=?").bind(pm[1]).run();return json({ok:true})}
   if(path==="/api/admin/settings"&&req.method==="GET"){const key=await setting(env,"geminiApiKey"),model=await setting(env,"geminiModel");return json({hasKey:!!key,maskedKey:maskKey(key),geminiModel:model||"gemini-3.1-flash-image"})}
   if(path==="/api/admin/settings"&&req.method==="PUT"){const body=await readBody(req);if(body.clearKey)await setSetting(env,"geminiApiKey","");if(body.geminiApiKey&&String(body.geminiApiKey).trim())await setSetting(env,"geminiApiKey",String(body.geminiApiKey).trim());if(body.geminiModel)await setSetting(env,"geminiModel",body.geminiModel);const key=await setting(env,"geminiApiKey");return json({ok:true,hasKey:!!key,maskedKey:maskKey(key),geminiModel:(await setting(env,"geminiModel"))||"gemini-3.1-flash-image"})}
-  if(path==="/api/admin/improve-image"&&req.method==="POST"){if(!(await setting(env,"geminiApiKey")))return json({error:"Configure a chave Gemini no painel."},400);return json({error:"A melhoria com Gemini será ativada após validarmos o modelo de imagem na publicação. O restante do painel está funcional."},501)}
+  if(path==="/api/admin/improve-image"&&req.method==="POST"){
+    const apiKey=await setting(env,"geminiApiKey");
+    if(!apiKey)return json({error:"Configure a chave Gemini no painel."},400);
+    const body=await readBody(req);
+    let parsed;
+    try{parsed=dataUrlBytes(body.imageData)}catch{return json({error:"Selecione uma imagem JPG, PNG ou WebP válida."},400)}
+    if(!["image/jpeg","image/png","image/webp"].includes(parsed.type))return json({error:"Formato não suportado. Use JPG, PNG ou WebP."},400);
+    const base64=String(body.imageData).split(",",2)[1];
+    const model=(await setting(env,"geminiModel"))||"gemini-3.1-flash-image";
+    const prompt=`Edite esta fotografia de produto de floricultura para deixá-la com aparência profissional de catálogo/e-commerce. Preserve com máxima fidelidade o produto real: NÃO altere tipo, espécie, quantidade, posição ou cor das flores; NÃO adicione nem remova flores, folhagens, laços, embalagens, pelúcias, chocolates, cartões, balões, vasos ou acessórios; NÃO mude textos, logos ou identidade visual presentes no produto. Preserve formato, proporções e composição. Apenas melhore iluminação, balanço de branco, exposição, contraste natural, nitidez, definição, redução de ruído e apresentação do fundo quando necessário. O resultado deve continuar sendo reconhecidamente o mesmo produto da foto original, fotorealista, sem aparência de IA e pronto para catálogo de floricultura.`;
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),90000);
+    let gr;
+    try{
+      gr=await fetch("https://generativelanguage.googleapis.com/v1beta/interactions",{
+        method:"POST",signal:controller.signal,
+        headers:{"x-goog-api-key":apiKey,"content-type":"application/json"},
+        body:JSON.stringify({model,input:[{type:"text",text:prompt},{type:"image",mime_type:parsed.type,data:base64}],response_format:{type:"image"}})
+      });
+    }catch(e){clearTimeout(timer);return json({error:e?.name==="AbortError"?"A Gemini demorou demais para responder. Tente novamente.":"Não foi possível conectar à Gemini."},502)}
+    clearTimeout(timer);
+    const raw=await gr.text();
+    let gd={};try{gd=JSON.parse(raw)}catch{}
+    if(!gr.ok){const msg=gd?.error?.message||gd?.message||`Gemini respondeu com erro ${gr.status}.`;return json({error:msg},gr.status>=400&&gr.status<600?gr.status:502)}
+    const findImage=(x)=>{if(!x||typeof x!=="object")return null;if(x.type==="image"&&typeof x.data==="string")return x;if(x.output_image&&typeof x.output_image.data==="string")return x.output_image;for(const v of Object.values(x)){if(v&&typeof v==="object"){const hit=findImage(v);if(hit)return hit}}return null};
+    const image=findImage(gd);
+    if(!image?.data)return json({error:"A Gemini respondeu, mas não devolveu uma imagem. Tente novamente ou confira o modelo configurado."},502);
+    const mime=image.mime_type||image.mimeType||"image/png";
+    return json({ok:true,imageData:`data:${mime};base64,${image.data}`,model});
+  }
   return json({error:"Rota não encontrada."},404);
 }
 async function media(env,key){const obj=await env.IMAGES.get(key);if(!obj)return new Response("Not found",{status:404});const h=new Headers();obj.writeHttpMetadata(h);h.set("etag",obj.httpEtag);h.set("cache-control","public, max-age=31536000, immutable");return new Response(obj.body,{headers:h})}

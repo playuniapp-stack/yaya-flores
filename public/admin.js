@@ -1,6 +1,6 @@
 const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];let originalData='',galleryData=[],aiData='',items=[],status={};
 async function api(url,opt={}){const r=await fetch(url,{credentials:'same-origin',headers:{'Content-Type':'application/json',...(opt.headers||{})},...opt});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Erro na operação');return d}
-const EXPECTED_SERVER_VERSION=11;
+const EXPECTED_SERVER_VERSION=12;
 function setAuthMode(setup){
   $('#authTitle').textContent=setup?'Criar acesso da proprietária':'Entrar no painel';
   $('#authText').textContent=setup?'Crie uma senha para proteger o painel. Ao concluir, você entrará automaticamente.':'Digite a senha que você criou para acessar o painel.';
